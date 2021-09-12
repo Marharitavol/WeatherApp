@@ -38,16 +38,19 @@ extension CurrentWeather: JSONDecodable {
     }
 }
 extension CurrentWeather {
-    var pressureString: String {
-        return "\(Int(pressure))mm"
-    }
-    var humidityString: String {
-        return "\(Int(humidity))%"
-    }
-    var temperatureString: String {
-        return "\(Int(temperature))˚C"
-    }
-    var appearentTemperatureString: String {
-        return "\(Int(apparentTemperature))˚C"
-    }
+  var pressureString: String {
+    return "\(Int(pressure * 0.750062)) mm"
+  }
+  
+  var humidityString: String {
+    return "\(Int(humidity * 100)) %"
+  }
+  
+  var temperatureString: String {
+    return "\(Int(5 / 9 * (temperature - 32)))˚C"
+  }
+  
+  var appearentTemperatureString: String {
+    return "Feels like: \(Int(5 / 9 * (apparentTemperature - 32)))˚C"
+  }
 }
