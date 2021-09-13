@@ -6,9 +6,11 @@
 //
 
 import UIKit
+import CoreLocation
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, CLLocationManagerDelegate {
 
+    @IBOutlet weak var particlesView: ParticlesView!
     @IBOutlet weak var locationLabel: UILabel!
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var pressureLabel: UILabel!
@@ -16,44 +18,61 @@ class ViewController: UIViewController {
     @IBOutlet weak var temperatureLabel: UILabel!
     @IBOutlet weak var appearentTemperatureLabel: UILabel!
     @IBOutlet weak var refreshButton: UIButton!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
+    
+    let locationManager = CLLocationManager()
+    
+  
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestAlwaysAuthorization()
+        locationManager.startUpdatingLocation()
+
+        
+        
+        getCurrentWeatherData()
+    }
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        let userLocation = locations.last! as CLLocation
+        
+        print("my location latitude: \(userLocation.coordinate.latitude), longitude: \(userLocation.coordinate.longitude)")
+    }
+    
+    func toggleActivityIndicator(on: Bool) {
+        refreshButton.isHidden = on
+        if on {
+            activityIndicator.startAnimating()
+        } else {
+            activityIndicator.stopAnimating()
+        }
+    }
     
     lazy var weatherManager = APIWeatherManager(apiKey: "2a6d8e376a69c1ae07d4a52dd0c2dfdc")
     let coordinates = Coordinates(latitude: 31.28408665595211, longitude: 51.49996417262024)
     
+    @IBAction func refreshButtonTapped(_ sender: UIButton) {
+        toggleActivityIndicator(on: true)
+        getCurrentWeatherData()
+    }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
+    func getCurrentWeatherData() {
         weatherManager.fetchCurrentWeatherWith(coordinates: coordinates) { (result) in
+            self.toggleActivityIndicator(on: false)
+
             switch result {
             case .Success(let currentWeather):
                 self.updateUIWith(currentWeather: currentWeather)
             case .Failure(let error as NSError):
-            
-            let alertController = UIAlertController(title: "Unable to get data", message: "\(error.localizedDescription)", preferredStyle: .alert)
-            let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
-            alertController.addAction(okAction)
-            
-            self.present(alertController, animated: true, completion: nil)
+                
+                let alertController = UIAlertController(title: "Unable to get data", message: "\(error.localizedDescription)", preferredStyle: .alert)
+                let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+                alertController.addAction(okAction)
+                
+                self.present(alertController, animated: true, completion: nil)
             }
         }
-        
-//        //let urlString = "https://api.forecast.io/forecast/2a6d8e376a69c1ae07d4a52dd0c2dfdc/37.8267,-122.423"
-//        let baseURL = URL(string: "https://api.forecast.io/forecast/2a6d8e376a69c1ae07d4a52dd0c2dfdc/")
-//        let fullURL = URL(string: "37.8267,-122.423", relativeTo: baseURL)
-//       
-//        let sessionConfiguration = URLSessionConfiguration.default
-//        let session = URLSession(configuration: sessionConfiguration)
-//        
-//        let request = URLRequest(url: fullURL!)
-//        let dataTask = session.dataTask(with: fullURL!) { (data, response, error) in
-//            
-//        }
-//        dataTask.resume()
-    }
-
-    @IBAction func refreshButtonTapped(_ sender: UIButton) {
-        
     }
     
     func updateUIWith(currentWeather: CurrentWeather) {
